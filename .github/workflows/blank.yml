@@ -1,4 +1,4 @@
-name: Setup GNOME Runner + Tailscale + VNC + Apps
+name: Setup KDE Plasma Runner + Tailscale + VNC
 
 on:
   workflow_dispatch:
@@ -13,7 +13,7 @@ jobs:
       TAILSCALE_AUTHKEY: ${{ secrets.TAILSCALE_AUTHKEY }}
       USERNAME: runner
       PASSWORD: runner
-      TAILSCALE_HOSTNAME: gh-gnome-vnc-${{ github.run_id }}
+      TAILSCALE_HOSTNAME: gh-kde-vnc-${{ github.run_id }}
 
     steps:
       - uses: actions/checkout@v4
@@ -23,30 +23,13 @@ jobs:
           echo "${USERNAME}:${PASSWORD}" | sudo chpasswd
           echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/${USERNAME}
 
-      - name: Install GNOME + VNC server + Extra Apps
+      - name: Install KDE Plasma + VNC server
         run: |
-          echo ">>> Installing GNOME Desktop + VNC..."
+          echo ">>> Installing KDE Plasma Desktop + VNC..."
           sudo apt-get update -qq
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
-            gnome-session gnome-terminal nautilus xorg dbus-x11 \
-            tigervnc-standalone-server tigervnc-common tigervnc-tools \
-            qemu-system gnome-boxes virt-manager flatpak
-
-          # Configure Snap (needed for apps like VS Code, Discord, Telegram)
-          echo ">>> Setting up Snap..."
-          sudo apt-get install -y snapd
-          sudo systemctl enable --now snapd
-          sudo ln -s /var/lib/snapd/snap /snap || true
-
-          # Install apps via Snap
-          echo ">>> Installing apps via Snap..."
-          sudo snap install code --classic
-          sudo snap install telegram-desktop
-          sudo snap install discord
-
-          # Setup Flatpak in user scope (to avoid system permission errors)
-          echo ">>> Setting up Flatpak..."
-          sudo -u ${USERNAME} flatpak --user remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo || true
+            kde-plasma-desktop konsole dbus-x11 xorg \
+            tigervnc-standalone-server tigervnc-common tigervnc-tools
 
           # Configure VNC password for the runner
           mkdir -p /home/${USERNAME}/.vnc
@@ -54,8 +37,8 @@ jobs:
           chmod 600 /home/${USERNAME}/.vnc/passwd
           chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}/.vnc
 
-          # Start GNOME when VNC launches
-          echo "gnome-session" > /home/${USERNAME}/.xsession
+          # Start KDE when VNC launches
+          echo "startplasma-x11" > /home/${USERNAME}/.xsession
           chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.xsession
 
       - name: Install Tailscale
